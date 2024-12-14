@@ -135,7 +135,7 @@ declare module 'react-native-bluetooth-escpos-printer' {
     const EVENT_DEVICE_ALREADY_PAIRED = 1;
     const EVENT_DEVICE_FOUND = 2;
 
-    function isBluetoothEnabled(): Promise<boolean>;
+    function checkBluetoothEnabled(): Promise<boolean>;
 
     function enableBluetooth(): Promise<string[] | null>;
 
