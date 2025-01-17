@@ -108,11 +108,24 @@ RCT_EXPORT_MODULE(BluetoothManager);
 
 
 //isBluetoothEnabled
+// RCT_EXPORT_METHOD(isBluetoothEnabled:(RCTPromiseResolveBlock)resolve
+//                   rejecter:(RCTPromiseRejectBlock)reject)
+// {
+//     CBManagerState state = [self.centralManager  state];
+//     resolve(state == CBManagerStatePoweredOn?@"true":@"false");//canot pass boolean or int value to resolve directly.
+// }
 RCT_EXPORT_METHOD(isBluetoothEnabled:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    CBManagerState state = [self.centralManager  state];
-    resolve(state == CBManagerStatePoweredOn?@"true":@"false");//canot pass boolean or int value to resolve directly.
+    // Kiểm tra xem centralManager đã được khởi tạo chưa
+    if (!self.centralManager) {
+        // Nếu chưa khởi tạo, khởi tạo centralManager
+        [self centralManager];
+    }
+    
+    // Kiểm tra trạng thái của Bluetooth
+    CBManagerState state = [self.centralManager state];
+    resolve(state == CBManagerStatePoweredOn ? @"true" : @"false");
 }
 
 //enableBluetooth
@@ -184,27 +197,30 @@ RCT_EXPORT_METHOD(connect:(NSString *)address
 {
     NSLog(@"Trying to connect....%@",address);
     [self callStop];
-    if(connected){
-        NSString *connectedAddress =connected.identifier.UUIDString;
-        if([address isEqualToString:connectedAddress]){
-            resolve(nil);
-            return;
-        }else{
-            [self.centralManager cancelPeripheralConnection:connected];
-            //Callbacks:
-            //entralManager:didDisconnectPeripheral:error:
-        }
+    if (connected) {
+    NSString *connectedAddress = connected.identifier.UUIDString;
+    if ([address isEqualToString:connectedAddress]) {
+        resolve(@{@"status": @"already_connected", @"address": address});
+        return;
+    } else {
+        [self.centralManager cancelPeripheralConnection:connected];
     }
+}
     CBPeripheral *peripheral = [self.foundDevices objectForKey:address];
     self.connectResolveBlock = resolve;
     self.connectRejectBlock = reject;
-    if(peripheral){
-          _waitingConnect = address;
-          NSLog(@"Trying to connectPeripheral....%@",address);
-        [self.centralManager connectPeripheral:peripheral options:nil];
-        // Callbacks:
-        //    centralManager:didConnectPeripheral:
-        //    centralManager:didFailToConnectPeripheral:error:
+    if (!peripheral) {
+        _waitingConnect = address;
+         NSLog(@"Scanning for device with address: %@", address);
+        [self.centralManager scanForPeripheralsWithServices:nil options:@{CBCentralManagerScanOptionAllowDuplicatesKey:@NO}];
+
+    // Timeout after 10 seconds
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                if (![self.foundDevices objectForKey:address]) {
+                reject(@"DEVICE_NOT_FOUND", [NSString stringWithFormat:@"Device with address %@ not found", address], nil);
+                [self.centralManager stopScan];
+            }
+        });
     }else{
           //starts the scan.
         _waitingConnect = address;
