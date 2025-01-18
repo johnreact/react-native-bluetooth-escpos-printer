@@ -69,6 +69,8 @@ declare module 'react-native-bluetooth-escpos-printer' {
      */
     function printerLineSpace(space: number): Promise<void>;
 
+    function isBluetoothEnabled(): Promise<boolean>;
+
     /**
      * Set the underline of the text
      *
