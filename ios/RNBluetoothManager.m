@@ -190,6 +190,25 @@ RCT_EXPORT_METHOD(stopScan:(RCTPromiseResolveBlock)resolve
     resolve(nil);
 }
 
+// Disconnect Bluetooth Device
+RCT_EXPORT_METHOD(disconnect:(NSString *)address
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    NSLog(@"Trying to disconnect....%@", address);
+
+    if (connected) {
+        NSString *connectedAddress = connected.identifier.UUIDString;
+        if ([address isEqualToString:connectedAddress]) {
+            [self.centralManager cancelPeripheralConnection:connected];
+            resolve(@{@"status": @"disconnected", @"address": address});
+            return;
+        }
+    }
+    reject(@"DEVICE_NOT_CONNECTED", [NSString stringWithFormat:@"Device with address %@ is not connected", address], nil);
+}
+
+
 //connect(address)
 RCT_EXPORT_METHOD(connect:(NSString *)address
                   findEventsWithResolver:(RCTPromiseResolveBlock)resolve
