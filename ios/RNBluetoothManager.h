@@ -26,4 +26,5 @@
 +(Boolean)isConnected;
 -(void)initSupportServices;
 -(void)callStop;
+-(void)disconnect:(NSString *)address resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 @end
