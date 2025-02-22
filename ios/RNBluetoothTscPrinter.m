@@ -10,6 +10,7 @@
 #import "RNBluetoothTscPrinter.h"
 #import "RNTscCommand.h"
 #import "RNBluetoothManager.h"
+#import "ImageUtils.h"
 
 @implementation RNBluetoothTscPrinter
 
@@ -25,6 +26,32 @@ NSInteger now;
 + (BOOL)requiresMainQueueSetup
 {
     return YES;
+}
+
+- (UIImage *)invertImage:(UIImage *)image {
+    CIImage *coreImage = [[CIImage alloc] initWithImage:image];
+    CIFilter *filter = [CIFilter filterWithName:@"CIColorInvert"];
+    [filter setValue:coreImage forKey:kCIInputImageKey];
+    
+    CIImage *outputImage = filter.outputImage;
+    return [UIImage imageWithCIImage:outputImage];
+}
+
+- (UIImage *)convertToBlackAndWhite:(UIImage *)image {
+    CIImage *coreImage = [[CIImage alloc] initWithImage:image];
+    
+    // Chuyển ảnh sang grayscale
+    CIFilter *grayFilter = [CIFilter filterWithName:@"CIPhotoEffectMono"];
+    [grayFilter setValue:coreImage forKey:kCIInputImageKey];
+    CIImage *grayImage = grayFilter.outputImage;
+    
+    // Áp dụng threshold để chuyển thành ảnh đen trắng (1-bit)
+    CIFilter *thresholdFilter = [CIFilter filterWithName:@"CIColorThreshold"];
+    [thresholdFilter setValue:grayImage forKey:kCIInputImageKey];
+    [thresholdFilter setValue:@0.5 forKey:@"inputThreshold"]; // Điều chỉnh giá trị threshold
+    CIImage *bwImage = thresholdFilter.outputImage;
+
+    return [UIImage imageWithCIImage:bwImage];
 }
 
 RCT_EXPORT_MODULE(BluetoothTscPrinter);
@@ -104,7 +131,11 @@ RCT_EXPORT_METHOD(printLabel:(NSDictionary *) options withResolve:(RCTPromiseRes
             NSString *image  = [img valueForKey:@"image"];
             NSData *imageData = [[NSData alloc] initWithBase64EncodedString:image options:0];
             UIImage *uiImage = [[UIImage alloc] initWithData:imageData];
-            [tsc addBitmap:x y:y bitmapMode:mode width:imgWidth bitmap:uiImage];
+            NSData *jpgData = UIImageJPEGRepresentation(uiImage, 1);
+            UIImage *jpgImage = [[UIImage alloc] initWithData:jpgData];
+
+
+            [tsc addBitmap:x y:y bitmapMode:mode width:imgWidth bitmap:jpgImage];
         }
 
     //QRCode
@@ -158,7 +189,10 @@ RCT_EXPORT_METHOD(printLabel:(NSDictionary *) options withResolve:(RCTPromiseRes
 - (void) didWriteDataToBle: (BOOL)success{
     if(success){
         if(_pendingResolve){
-            _pendingResolve(nil);
+            // _pendingResolve(nil);
+            _pendingResolve(@"Print success");
+            _pendingResolve = nil;
+            _pendingReject = nil;
         }
     }else if(_pendingReject){
         _pendingReject(@"PRINT_ERROR",@"PRINT_ERROR",nil);
