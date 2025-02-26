@@ -10,6 +10,7 @@
 #import <UIKit/UIKit.h>
 #import "RNTscCommand.h"
 #import "ImageUtils.h"
+#import <Accelerate/Accelerate.h>
 @implementation RNTscCommand
 -(id)init
 {
@@ -162,26 +163,51 @@ bitmapMode:(NSInteger) mode width:(NSInteger) nWidth
 bitmap:(UIImage *) b{
     //todo: NEED TO IMPLEMENT>>>>>>
     if (b) {
+        NSLog(@"🖼 Ảnh trước khi resize: Width = %.2f, Height = %.2f", b.size.width, b.size.height);
         CGFloat imgWidth = b.size.width;
         CGFloat imgHeigth = b.size.height;
+
         NSInteger width = (nWidth + 7) / 8 * 8;
         NSInteger height = imgHeigth * width / imgWidth;
         CGSize size = CGSizeMake(width, height);
-        UIImage *resized = [ImageUtils imageWithImage:b scaledToFillSize:CGSizeMake(width, height)];
+        UIImage *resized = [ImageUtils imageWithImage:b scaledToFillSize:size];
+
+        CGFloat scaleX = imgWidth / resized.size.width;
+        CGFloat scaleY = imgHeigth / resized.size.height;
+
+        NSLog(@"🔍 Ảnh sau khi resize: Width = %.2f, Height = %.2f", resized.size.width, resized.size.height);
 
         unsigned char * graImage = [ImageUtils imageToGreyImage:resized];
 
+        // for (int i = 0; i < size.width * size.height; i++) {
+        //     graImage[i] = graImage[i] ^ 0xFF;
+        // }
+
         for (int i = 0; i < size.width * size.height; i++) {
+            graImage[i] = MIN(graImage[i] + 39, 255); 
             graImage[i] = graImage[i] ^ 0xFF;
         }
-        unsigned char * formatedData = [ImageUtils format_K_threshold:graImage width:size.width height:size.height];
+
+        unsigned char * formatedData = [ImageUtils format_K_threshold:graImage width:resized.size.width height:resized.size.height];
 
         NSInteger srcLen = (int)resized.size.width*resized.size.height;
+
+        NSLog(@"formatedData: %ld", formatedData);
+
+        NSLog(@"srcLen: %ld",srcLen);
+
         NSData *codecontent = [ImageUtils pixToTscCmd:formatedData width:srcLen];
         height = srcLen / width;
         width /= 8;
-        NSString *str =[NSString stringWithFormat:@ "BITMAP %ld,%ld,%ld,%ld,%ld,",
+        NSString *str =[NSString stringWithFormat:@"BITMAP %ld,%ld,%ld,%ld,%ld,",
                         x,y,width,height,mode];
+
+     
+
+        NSLog(@"Width: %ld, Height: %ld", width * scaleX, height * scaleY);
+        NSLog(@"Image Size: %.2f x %.2f", resized.size.width, resized.size.height);
+        NSLog(@"codecontent: %.2f", codecontent);
+
         [self addStrToCommand:str];
         [_command appendData:codecontent];
         [self addStrToCommand:@"\r\n"];
