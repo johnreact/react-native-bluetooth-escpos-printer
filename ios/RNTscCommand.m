@@ -184,7 +184,7 @@ bitmap:(UIImage *) b{
         // }
 
         for (int i = 0; i < size.width * size.height; i++) {
-            graImage[i] = MIN(graImage[i] + 39, 255); 
+            graImage[i] = MIN(graImage[i] + 38, 255); 
             graImage[i] = graImage[i] ^ 0xFF;
         }
 
