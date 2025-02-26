@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "ImageUtils.h"
+#import <Accelerate/Accelerate.h>
+
 @implementation ImageUtils : NSObject
 int p0[] = { 0, 0x80 };
 int p1[] = { 0, 0x40 };
@@ -34,96 +36,118 @@ int p6[] = { 0, 0x02 };
     return paddedImage;
 }
 
+// +(uint8_t *)imageToGreyImage:(UIImage *)image {
+//     // Create image rectangle with current image width/height
+//     int kRed = 1;
+//     int kGreen = 2;
+//     int kBlue = 4;
+
+//     int colors = kGreen | kBlue | kRed;
+
+//     CGFloat actualWidth = image.size.width;
+//     CGFloat actualHeight = image.size.height;
+//     NSLog(@"actual size: %f,%f",actualWidth,actualHeight);
+//     uint32_t *rgbImage = (uint32_t *) malloc(actualWidth * actualHeight * sizeof(uint32_t));
+//     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+//     CGContextRef context = CGBitmapContextCreate(rgbImage, actualWidth, actualHeight, 8, actualWidth*4, colorSpace,
+//                                                  kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipLast);
+//     CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
+//     CGContextSetShouldAntialias(context, NO);
+//     CGContextDrawImage(context, CGRectMake(0, 0, actualWidth, actualHeight), [image CGImage]);
+//     CGContextRelease(context);
+//     CGColorSpaceRelease(colorSpace);
+    
+//         int width = image.size.width;
+//     int height = image.size.height;
+//     uint8_t *m_imageData = (uint8_t *) malloc(width * height);
+//    // NSMutableString *toLog = [[NSMutableString alloc] init];
+//     for(int y = 0; y < actualHeight; y++) {
+//         for(int x = 0; x < actualWidth; x++) {
+//         //     uint32_t rgbPixel=rgbImage[(int)(y*actualWidth+x)];
+//         //     uint32_t sum=0,count=0;
+//         //     if (colors & kRed) {sum += (rgbPixel>>24)&255; count++;}
+//         //     if (colors & kGreen) {sum += (rgbPixel>>16)&255; count++;}
+//         //     if (colors & kBlue) {sum += (rgbPixel>>8)&255; count++;}
+//         //    // [toLog appendFormat:@"pixel:%d,sum:%d,count:%d,val:%d;",rgbPixel,sum,count,(int)(sum/count)];
+//         //     m_imageData[(int)(y*actualWidth+x)]=sum/count;
+
+//                  uint32_t rgbPixel = rgbImage[(y * width) + x];
+//             uint8_t gray = ((rgbPixel >> 16) & 0xFF) * 0.3 + ((rgbPixel >> 8) & 0xFF) * 0.59 + (rgbPixel & 0xFF) * 0.11;
+            
+//             // Chuyển từ grayscale (8-bit) về nhị phân (1-bit)
+//             m_imageData[(y * width) + x] = (gray > 128) ? 255 : 0;
+           
+//         }
+//     }
+//     return m_imageData;
+// }
+
+
 +(uint8_t *)imageToGreyImage:(UIImage *)image {
-    // Create image rectangle with current image width/height
-    int kRed = 1;
-    int kGreen = 2;
-    int kBlue = 4;
+//     // Create image rectangle with current image width/height
+//     int kRed = 1;
+//     int kGreen = 2;
+//     int kBlue = 4;
 
-    int colors = kGreen | kBlue | kRed;
+//     int colors = kGreen | kBlue | kRed;
 
-    CGFloat actualWidth = image.size.width;
-    CGFloat actualHeight = image.size.height;
-    NSLog(@"actual size: %f,%f",actualWidth,actualHeight);
-    uint32_t *rgbImage = (uint32_t *) malloc(actualWidth * actualHeight * sizeof(uint32_t));
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef context = CGBitmapContextCreate(rgbImage, actualWidth, actualHeight, 8, actualWidth*4, colorSpace,
-                                                 kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipLast);
-    CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
-    CGContextSetShouldAntialias(context, NO);
-    CGContextDrawImage(context, CGRectMake(0, 0, actualWidth, actualHeight), [image CGImage]);
+//     CGFloat actualWidth = image.size.width;
+//     CGFloat actualHeight = image.size.height;
+//     NSLog(@"actual size: %f,%f",actualWidth,actualHeight);
+//     uint32_t *rgbImage = (uint32_t *) malloc(actualWidth * actualHeight * sizeof(uint32_t));
+//     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+//     CGContextRef context = CGBitmapContextCreate(rgbImage, actualWidth, actualHeight, 8, actualWidth*4, colorSpace,
+//                                                  kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipLast);
+//     CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
+//     CGContextSetShouldAntialias(context, NO);
+//     CGContextDrawImage(context, CGRectMake(0, 0, actualWidth, actualHeight), [image CGImage]);
+//     CGContextRelease(context);
+//     CGColorSpaceRelease(colorSpace);
+    
+//         int width = image.size.width;
+//     int height = image.size.height;
+//     uint8_t *m_imageData = (uint8_t *) malloc(width * height);
+//    // NSMutableString *toLog = [[NSMutableString alloc] init];
+//     for(int y = 0; y < actualHeight; y++) {
+//         for(int x = 0; x < actualWidth; x++) {
+//         //     uint32_t rgbPixel=rgbImage[(int)(y*actualWidth+x)];
+//         //     uint32_t sum=0,count=0;
+//         //     if (colors & kRed) {sum += (rgbPixel>>24)&255; count++;}
+//         //     if (colors & kGreen) {sum += (rgbPixel>>16)&255; count++;}
+//         //     if (colors & kBlue) {sum += (rgbPixel>>8)&255; count++;}
+//         //    // [toLog appendFormat:@"pixel:%d,sum:%d,count:%d,val:%d;",rgbPixel,sum,count,(int)(sum/count)];
+//         //     m_imageData[(int)(y*actualWidth+x)]=sum/count;
+
+//                  uint32_t rgbPixel = rgbImage[(y * width) + x];
+//             uint8_t gray = ((rgbPixel >> 16) & 0xFF) * 0.3 + ((rgbPixel >> 8) & 0xFF) * 0.59 + (rgbPixel & 0xFF) * 0.11;
+            
+//             // Chuyển từ grayscale (8-bit) về nhị phân (1-bit)
+//             m_imageData[(y * width) + x] = (gray > 128) ? 1 : 0;
+           
+//         }
+//     }
+//     return m_imageData;
+
+
+    int width = image.size.width;
+    int height = image.size.height;
+    uint8_t *m_imageData = (uint8_t *) malloc(width * height);
+    
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
+    CGContextRef context = CGBitmapContextCreate(m_imageData, width, height, 8, width, colorSpace, kCGImageAlphaNone);
+    CGContextDrawImage(context, CGRectMake(0, 0, width, height), [image CGImage]);
     CGContextRelease(context);
     CGColorSpaceRelease(colorSpace);
     
-//    CGRect imageRect = CGRectMake(0, 0, actualWidth, actualHeight);
-//    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
-//
-//    CGContextRef context = CGBitmapContextCreate(rgbImage, actualWidth, actualHeight, 8, actualWidth*4, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipLast);
-//    CGContextDrawImage(context, imageRect, [image CGImage]);
-//
-//    //CGImageRef grayImage = CGBitmapContextCreateImage(context);
-//    CGColorSpaceRelease(colorSpace);
-//    CGContextRelease(context);
-    
-//    context = CGBitmapContextCreate(nil, actualWidth, actualHeight, 8, 0, nil, kCGImageAlphaOnly);
-//    CGContextDrawImage(context, imageRect, [image CGImage]);
-//    CGImageRef mask = CGBitmapContextCreateImage(context);
-//    CGContextRelease(context);
-    
-//    UIImage *grayScaleImage = [UIImage imageWithCGImage:CGImageCreateWithMask(grayImage, mask) scale:image.scale orientation:image.imageOrientation];
-//    CGImageRelease(grayImage);
- //   CGImageRelease(mask);
-    
-    // Return the new grayscale image
-    
-     //now convert to grayscale
-    uint8_t *m_imageData = (uint8_t *) malloc(actualWidth * actualHeight);
-   // NSMutableString *toLog = [[NSMutableString alloc] init];
-    for(int y = 0; y < actualHeight; y++) {
-        for(int x = 0; x < actualWidth; x++) {
-            uint32_t rgbPixel=rgbImage[(int)(y*actualWidth+x)];
-            uint32_t sum=0,count=0;
-            if (colors & kRed) {sum += (rgbPixel>>24)&255; count++;}
-            if (colors & kGreen) {sum += (rgbPixel>>16)&255; count++;}
-            if (colors & kBlue) {sum += (rgbPixel>>8)&255; count++;}
-           // [toLog appendFormat:@"pixel:%d,sum:%d,count:%d,val:%d;",rgbPixel,sum,count,(int)(sum/count)];
-            m_imageData[(int)(y*actualWidth+x)]=sum/count;
-           
-        }
+    // Áp dụng threshold ngay tại đây để giảm vòng lặp
+    for (int i = 0; i < width * height; i++) {
+        m_imageData[i] = (m_imageData[i] < 140) ? 0 : 255; // Ngưỡng đậm hơn để in rõ nét
     }
-    //NSLog(@"m_imageData:%@",toLog);
-    return m_imageData;
-//    // Create image rectangle with current image width/height
-//    CGRect imageRect = CGRectMake(0, 0, image.size.width, image.size.height);
-//
-//    // Grayscale color space
-//    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
-//
-//    // Create bitmap content with current image size and grayscale colorspace
-//    CGContextRef context = CGBitmapContextCreate(nil, image.size.width, image.size.height, 8, 0, colorSpace, kCGImageAlphaNone);
-//
-//    // Draw image into current context, with specified rectangle
-//    // using previously defined context (with grayscale colorspace)
-//    CGContextDrawImage(context, imageRect, [image CGImage]);
-//
-//    // Create bitmap image info from pixel data in current context
-//    CGImageRef imageRef = CGBitmapContextCreateImage(context);
-//
-//    // Create a new UIImage object
-//    UIImage *newImage = [UIImage imageWithCGImage:imageRef];
-//
-//    // Release colorspace, context and bitmap information
-//    CGColorSpaceRelease(colorSpace);
-//    CGContextRelease(context);
-//    CFRelease(imageRef);
-//
-//    // Return the new grayscale image
-//    return newImage;
     
+    return m_imageData;
 }
 
-+ (UIImage *)imageWithImage:(UIImage *)image scaledToFillSize:(CGSize)size
-{
++ (UIImage *)imageWithImage:(UIImage *)image scaledToFillSize:(CGSize)size {
     CGFloat scale = MAX(size.width/image.size.width, size.height/image.size.height);
     CGFloat width = image.size.width * scale;
     CGFloat height = image.size.height * scale;
@@ -131,6 +155,8 @@ int p6[] = { 0, 0x02 };
                                   (size.height - height)/2.0f,
                                   width,
                                   height);
+
+    NSLog(@"🔍 Ảnh sau khi resize: scale = %.2f, width = %.2f, height = %.2f, imageRect = %.2f", scale, width, height, imageRect);
     
     UIGraphicsBeginImageContextWithOptions(size, NO, 0);
     [image drawInRect:imageRect];
@@ -138,6 +164,100 @@ int p6[] = { 0, 0x02 };
     UIGraphicsEndImageContext();
     return newImage;
 }
+
++(uint8_t *)convertToGrayscale:(UIImage *)image width:(size_t)width height:(size_t)height{
+    if (!image) return NULL;
+
+    // 1️⃣ Xác định tọa độ vùng cần cắt
+    CGFloat xMin = 10;  // Giá trị x bắt đầu cắt (có thể thay đổi)
+    CGFloat yMin = 10;  // Giá trị y bắt đầu cắt (có thể thay đổi)
+    CGFloat newWidth = width - xMin;
+    CGFloat newHeight = height - yMin;
+
+    // 2️⃣ Cắt ảnh
+    CGRect cropRect = CGRectMake(xMin, yMin, newWidth, newHeight);
+    CGImageRef croppedImageRef = CGImageCreateWithImageInRect([image CGImage], cropRect);
+    UIImage *croppedImage = [UIImage imageWithCGImage:croppedImageRef];
+    CGImageRelease(croppedImageRef);
+
+    // 3️⃣ Chuyển đổi ảnh đã cắt thành grayscale
+    size_t croppedWidth = CGImageGetWidth(croppedImage.CGImage);
+    size_t croppedHeight = CGImageGetHeight(croppedImage.CGImage);
+    size_t bytesPerRow = croppedWidth * 4; // 4 bytes per pixel (RGBA)
+    
+    uint8_t *rgbData = (uint8_t *)malloc(croppedWidth * croppedHeight * 4);
+    uint8_t *grayData = (uint8_t *)malloc(croppedWidth * croppedHeight);
+
+    if (!rgbData || !grayData) {
+        free(rgbData);
+        free(grayData);
+        return NULL;
+    }
+
+    // 4️⃣ Tạo context để lấy dữ liệu ảnh vào rgbData
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef context = CGBitmapContextCreate(rgbData, croppedWidth, croppedHeight, 8, bytesPerRow, colorSpace, kCGImageAlphaNoneSkipLast | kCGBitmapByteOrder32Little);
+    CGContextDrawImage(context, CGRectMake(0, 0, croppedWidth, croppedHeight), croppedImage.CGImage);
+    CGContextRelease(context);
+    CGColorSpaceRelease(colorSpace);
+
+    // 5️⃣ Chuyển đổi sang grayscale
+    vImage_Buffer srcBuffer = { .data = rgbData, .width = croppedWidth, .height = croppedHeight, .rowBytes = bytesPerRow };
+    vImage_Buffer destBuffer = { .data = grayData, .width = croppedWidth, .height = croppedHeight, .rowBytes = croppedWidth };
+
+    // vImageConvert_RGB888toGrayscale(&srcBuffer, &destBuffer, NULL, kvImageNoFlags);
+
+    // Giải phóng bộ nhớ
+    free(rgbData);
+
+    return grayData;  // Trả về dữ liệu ảnh grayscale đã cắt
+}
+
+// +(uint8_t *)convertToGrayscale:(UIImage *)image width:(size_t)width height:(size_t)height {
+//     // if (!image) return NULL; // Kiểm tra ảnh NULL tránh crash
+    
+//     // 1️⃣ Tạo buffer cho ảnh gốc (RGBA)
+//     // size_t bytesPerRow = width * 4; // 4 bytes per pixel (RGBA)
+//     // uint8_t *rgbData = (uint8_t *)malloc(width * height * 4);
+//     // uint8_t *grayData = (uint8_t *)malloc(width * height);
+    
+//     // if (!rgbData || !grayData) {
+//     //     free(rgbData);
+//     //     free(grayData);
+//     //     return NULL;
+//     // }
+    
+//     // 2️⃣ Tạo context để lấy dữ liệu ảnh vào rgbData
+//     // CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+//     // CGContextRef context = CGBitmapContextCreate(rgbData, width, height, 8, bytesPerRow, colorSpace, kCGImageAlphaNoneSkipLast | kCGBitmapByteOrder32Little);
+//     // CGContextDrawImage(context, CGRectMake(0, 0, width, height), image.CGImage);
+//     // CGContextRelease(context);
+//     // CGColorSpaceRelease(colorSpace);
+    
+//     // // 3️⃣ Tạo vImage buffer cho RGB
+//     // vImage_Buffer srcBuffer = { .data = rgbData, .width = width, .height = height, .rowBytes = bytesPerRow };
+//     // vImage_Buffer smoothBuffer = { .data = malloc(width * height * 4), .width = width, .height = height, .rowBytes = bytesPerRow };
+
+//     // if (!smoothBuffer.data) {
+//     //     free(rgbData);
+//     //     free(grayData);
+//     //     return NULL;
+//     // }
+    
+//     // // 4️⃣ Làm mịn ảnh bằng bộ lọc Gaussian Box 3x3
+//     // vImageBoxConvolve_ARGB8888(&srcBuffer, &smoothBuffer, NULL, 0, 0, 3, 3, NULL, kvImageEdgeExtend);
+    
+//     // // 5️⃣ Chuyển đổi RGB sang grayscale
+//     // vImage_Buffer destBuffer = { .data = grayData, .width = width, .height = height, .rowBytes = width };
+//     // vImageConvert_ARGB8888toPlanar8(&smoothBuffer, &destBuffer, NULL, kvImageNoFlags);
+    
+//     // // 6️⃣ Giải phóng bộ nhớ
+//     // free(rgbData);
+//     // free(smoothBuffer.data);
+    
+//     // return grayData; // Trả về ảnh grayscale đã được làm mịn
+//     return NULL
+// }
 
 + (NSData*)bitmapToArray:(UIImage*) bmp
 {
