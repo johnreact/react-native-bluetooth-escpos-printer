@@ -124,6 +124,37 @@ public class PrintPicture {
         return data;
     }
 
+    public static Bitmap toGrayscaleWithContrast(Bitmap bmpOriginal, float contrast) {
+        int width = bmpOriginal.getWidth();
+        int height = bmpOriginal.getHeight();
+        
+        Bitmap bmpGrayscale = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmpGrayscale);
+        Paint paint = new Paint();
+        ColorMatrix cm = new ColorMatrix();
+        
+        // Chuyển sang grayscale
+        cm.setSaturation(0);
+        
+        // Tăng độ tương phản
+        float scale = contrast; // Giá trị mặc định: 1.0f, tăng lên 1.5f - 2.0f để đậm hơn
+        float translate = (-0.5f * scale + 0.5f) * 255f;
+        ColorMatrix contrastMatrix = new ColorMatrix(new float[]{
+                scale, 0, 0, 0, translate,
+                0, scale, 0, 0, translate,
+                0, 0, scale, 0, translate,
+                0, 0, 0, 1, 0
+        });
+        cm.postConcat(contrastMatrix);
+        
+        ColorMatrixColorFilter f = new ColorMatrixColorFilter(cm);
+        paint.setColorFilter(f);
+        c.drawBitmap(bmpOriginal, 0, 0, paint);
+        
+        return bmpGrayscale;
+    }
+    
+
     public static Bitmap toGrayscale(Bitmap bmpOriginal) {
         int width, height;
         height = bmpOriginal.getHeight();
@@ -253,11 +284,30 @@ public class PrintPicture {
         return data;
     }
     public static byte[] bitmapToBWPix(Bitmap mBitmap) {
-        int[] pixels = new int[mBitmap.getWidth() * mBitmap.getHeight()];
-        byte[] data = new byte[mBitmap.getWidth() * mBitmap.getHeight()];
-        Bitmap grayBitmap = toGrayscale(mBitmap);
-        grayBitmap.getPixels(pixels, 0, mBitmap.getWidth(), 0, 0, mBitmap.getWidth(), mBitmap.getHeight());
-        format_K_dither16x16(pixels, grayBitmap.getWidth(), grayBitmap.getHeight(), data);
+        // int[] pixels = new int[mBitmap.getWidth() * mBitmap.getHeight()];
+        // byte[] data = new byte[mBitmap.getWidth() * mBitmap.getHeight()];
+        // // Bitmap grayBitmap = toGrayscale(mBitmap);
+        // Bitmap grayBitmap = toGrayscaleWithContrast(mBitmap, 3.0f); 
+        // grayBitmap.getPixels(pixels, 0, mBitmap.getWidth(), 0, 0, mBitmap.getWidth(), mBitmap.getHeight());
+        // format_K_dither16x16(pixels, grayBitmap.getWidth(), grayBitmap.getHeight(), data);
+        // return data;
+
+        
+        int width = mBitmap.getWidth();
+        int height = mBitmap.getHeight();
+        int[] pixels = new int[width * height];
+        byte[] data = new byte[width * height];
+    
+        // Chuyển ảnh sang grayscale với contrast
+        Bitmap grayBitmap = toGrayscaleWithContrast(mBitmap, 2.5f); 
+        grayBitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+    
+        // Áp dụng threshold: mọi pixel nhỏ hơn 128 thành đen, lớn hơn 128 thành trắng
+        for (int i = 0; i < pixels.length; i++) {
+            int gray = pixels[i] & 0xFF;  // Lấy kênh màu grayscale
+            data[i] = (gray < 130) ? (byte) 1 : (byte) 0;  // Ngưỡng thấp hơn để chữ đậm hơn
+        }
+    
         return data;
     }
 
@@ -266,7 +316,7 @@ public class PrintPicture {
 
         for (int y = 0; y < ysize; ++y) {
             for (int x = 0; x < xsize; ++x) {
-                if ((orgpixels[k] & 255) > Floyd16x16[x & 15][y & 15]) {
+                if ((orgpixels[k] & 255) + 20 > Floyd16x16[x & 15][y & 15]) {
                     despixels[k] = 0;
                 } else {
                     despixels[k] = 1;
