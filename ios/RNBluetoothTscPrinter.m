@@ -1,16 +1,11 @@
-//
-//  RNBluetoothTscPrinter.m
-//  RNBluetoothEscposPrinter
-//
-//  Created by januslo on 2018/10/1.
-//  Copyright © 2018年 Facebook. All rights reserved.
-//
 
 #import <Foundation/Foundation.h>
 #import "RNBluetoothTscPrinter.h"
 #import "RNTscCommand.h"
 #import "RNBluetoothManager.h"
 #import "ImageUtils.h"
+#import <CoreImage/CoreImage.h>
+#import <UIKit/UIKit.h>
 
 @implementation RNBluetoothTscPrinter
 
@@ -37,25 +32,51 @@ NSInteger now;
     return [UIImage imageWithCIImage:outputImage];
 }
 
-- (UIImage *)convertToBlackAndWhite:(UIImage *)image {
-    CIImage *coreImage = [[CIImage alloc] initWithImage:image];
+- (UIImage *)convertToBlackAndWhite:(UIImage *)image threshold:(CGFloat)threshold {
+    CGSize size = image.size;
+    CGRect imageRect = CGRectMake(0, 0, size.width, size.height);
     
-    // Chuyển ảnh sang grayscale
-    CIFilter *grayFilter = [CIFilter filterWithName:@"CIPhotoEffectMono"];
-    [grayFilter setValue:coreImage forKey:kCIInputImageKey];
-    CIImage *grayImage = grayFilter.outputImage;
+    // Tạo context grayscale (1 kênh màu, độ sâu 8 bit)
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
+    CGContextRef context = CGBitmapContextCreate(NULL, size.width, size.height, 8, 0, colorSpace, kCGImageAlphaNone);
     
-    // Áp dụng threshold để chuyển thành ảnh đen trắng (1-bit)
+    if (!context) {
+        CGColorSpaceRelease(colorSpace);
+        return nil;
+    }
+    
+    CGContextDrawImage(context, imageRect, image.CGImage);
+    CGImageRef grayImageRef = CGBitmapContextCreateImage(context);
+    UIImage *grayImage = [UIImage imageWithCGImage:grayImageRef];
+    
+    CGContextRelease(context);
+    CGImageRelease(grayImageRef);
+    CGColorSpaceRelease(colorSpace);
+    
+    // Áp dụng threshold để chuyển ảnh grayscale thành đen trắng
+    CIImage *ciImage = [[CIImage alloc] initWithImage:grayImage];
     CIFilter *thresholdFilter = [CIFilter filterWithName:@"CIColorThreshold"];
-    [thresholdFilter setValue:grayImage forKey:kCIInputImageKey];
-    [thresholdFilter setValue:@0.5 forKey:@"inputThreshold"]; // Điều chỉnh giá trị threshold
+    [thresholdFilter setValue:ciImage forKey:kCIInputImageKey];
+    [thresholdFilter setValue:@(threshold) forKey:@"inputThreshold"];
     CIImage *bwImage = thresholdFilter.outputImage;
-
+    
     return [UIImage imageWithCIImage:bwImage];
 }
 
 RCT_EXPORT_MODULE(BluetoothTscPrinter);
 //printLabel(final ReadableMap options, final Promise promise)
+
+- (UIImage *)resizeImage:(UIImage *)image targetWidth:(CGFloat)targetWidth {
+    CGFloat scale = targetWidth / image.size.width;
+    CGSize newSize = CGSizeMake(targetWidth, image.size.height * scale);
+    
+    UIGraphicsBeginImageContextWithOptions(newSize, NO, 1.0);
+    [image drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
+    UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return newImage;
+}
 RCT_EXPORT_METHOD(printLabel:(NSDictionary *) options withResolve:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
@@ -131,10 +152,14 @@ RCT_EXPORT_METHOD(printLabel:(NSDictionary *) options withResolve:(RCTPromiseRes
             NSString *image  = [img valueForKey:@"image"];
             NSData *imageData = [[NSData alloc] initWithBase64EncodedString:image options:0];
             UIImage *uiImage = [[UIImage alloc] initWithData:imageData];
-            NSData *jpgData = UIImageJPEGRepresentation(uiImage, 1);
+            // UIImage *grayImage = [ImageUtils convertToGrayScale:uiImage];
+            // NSData *jpgData = UIImageJPEGRepresentation(grayImage, 0.1);
+            // UIImage *jpgImage = [[UIImage alloc] initWithData:jpgData];
+            // [tsc addBitmap:x y:y bitmapMode:mode width:imgWidth bitmap:jpgImage];
+
+            UIImage *bwImage = [self convertToBlackAndWhite:uiImage threshold:0.8]; // Điều chỉnh threshold theo ý muốn
+            NSData *jpgData = UIImageJPEGRepresentation(bwImage, 0.5);
             UIImage *jpgImage = [[UIImage alloc] initWithData:jpgData];
-
-
             [tsc addBitmap:x y:y bitmapMode:mode width:imgWidth bitmap:jpgImage];
         }
 
@@ -182,8 +207,11 @@ RCT_EXPORT_METHOD(printLabel:(NSDictionary *) options withResolve:(RCTPromiseRes
     _pendingReject = reject;
     _pendingResolve = resolve;
     toPrint = tsc.command;
+    NSLog(@"🚀 Sent command to printer: %@", tsc.command);
     now = 0;
+    NSLog(@"🚀 Sending print command...");
     [RNBluetoothManager writeValue:toPrint withDelegate:self];
+    NSLog(@"✅ Print command sent!");
 }
 
 - (void) didWriteDataToBle: (BOOL)success{
