@@ -16,4 +16,5 @@
 +(unsigned char *)format_K_threshold:(unsigned char *) orgpixels
                                width:(NSInteger) xsize height:(NSInteger) ysize;
 +(NSData *)pixToTscCmd:(uint8_t *)src width:(NSInteger) width;
++ (uint8_t *)convertToGrayscale:(UIImage *)image width:(size_t)width height:(size_t)height;
 @end
