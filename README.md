@@ -1,3 +1,10 @@
+# 🚨 DEPRECATED
+
+This repository is no longer supported.
+Please do NOT install via GitHub.
+
+👉 Use the official npm package (coming soon).
+
 > **🚨 Important Notice**
 >
 > Effective June 20, 2026, this library will be officially deprecated. Installation via GitHub repository URLs will no longer be supported.
