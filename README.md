@@ -7,7 +7,7 @@ Please do NOT install via GitHub.
 
 > **🚨 Important Notice**
 >
-> Effective June 20, 2026, this library will be officially deprecated. Installation via GitHub repository URLs will no longer be supported.
+> Effective Apr 20, 2026, this library will be officially deprecated. Installation via GitHub repository URLs will no longer be supported.
 >
 > The library will transition to distribution via npm with a significantly improved and updated version, including:
 > - Enhanced Bluetooth printing performance
