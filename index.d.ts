@@ -314,6 +314,6 @@ declare module 'react-native-bluetooth-escpos-printer' {
       }>;
     }
 
-    //function printLabel(options: IPrintLabelOptions): Promise<void>;
+    function printLabel(options: IPrintLabelOptions): Promise<void>;
   }
 }
