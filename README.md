@@ -1,0 +1,7 @@
+> **🚨 Important Notice**
+>
+> Effective June 20, 2026, this library will be officially deprecated. Installation via GitHub repository URLs will no longer be supported.
+>
+> The library will transition to distribution via npm. Further details regarding the new package will be announced in the near future.
+>
+> Thank you for your continued support.
