@@ -1,6 +1,6 @@
 {
-  "name": "RN-Bluetooth-Printer",
-  "version": "0.0.9",
+  "name": "",
+  "version": "0.0.0",
   "description": "React-Native plugin for the bluetooth ESC/POS printers.",
   "main": "index.js",
   "types": "index.d.ts",
